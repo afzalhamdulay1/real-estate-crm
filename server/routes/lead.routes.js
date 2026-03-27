@@ -1,0 +1,44 @@
+import express from "express";
+import {
+  createLead,
+  getLeads,
+  updateLead,
+  deleteLead,
+} from "../controllers/lead.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
+import { authorizeRoles } from "../middleware/role.middleware.js";
+import { auditMiddleware } from "../middleware/audit.middleware.js";
+
+const router = express.Router();
+
+// All routes are protected
+router.use(protect);
+
+// Get leads (agents can see their leads, admins see all)
+router.get("/", getLeads);
+
+// Create lead (admin/superadmin only)
+router.post(
+  "/",
+  authorizeRoles("admin", "superadmin"),
+  auditMiddleware("CREATE", "LEAD"),
+  createLead,
+);
+
+// Update lead (admin/superadmin only)
+router.put(
+  "/:id",
+  authorizeRoles("admin", "superadmin"),
+  auditMiddleware("UPDATE", "LEAD"),
+  updateLead,
+);
+
+// Delete lead (admin/superadmin only)
+router.delete(
+  "/:id",
+  authorizeRoles("admin", "superadmin"),
+  auditMiddleware("DELETE", "LEAD"),
+  deleteLead,
+);
+
+export default router;
