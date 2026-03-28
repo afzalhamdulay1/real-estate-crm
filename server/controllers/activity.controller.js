@@ -27,8 +27,8 @@ export const getActivities = async (req, res) => {
       endDate: req.query.endDate,
     };
 
-    const activities = await getActivitiesService(filters);
-    res.json({ activities });
+    const activitiesData = await getActivitiesService(filters);
+    res.json(activitiesData);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

@@ -4,10 +4,11 @@ import Lead from "../models/lead.model.js";
 export const createLeadService = async (data, userId) => {
   const lead = await Lead.create(data);
 
-  return lead
-    .populate("assignedTo", "name email")
-    .populate("notes")
-    .populate("property", "title price type location");
+  return await lead.populate([
+    { path: "assignedTo", select: "name email" },
+    "notes",
+    { path: "property", select: "title price type location" },
+  ]);
 };
 
 // Get leads
