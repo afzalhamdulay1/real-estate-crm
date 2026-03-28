@@ -1,7 +1,7 @@
 import { createAuditLog } from "../services/audit.service.js";
 
 // Generic Audit Middleware
-export const auditMiddleware = (action) => {
+export const auditMiddleware = (action, module) => {
   return (req, res, next) => {
     const originalJson = res.json;
 
@@ -9,24 +9,22 @@ export const auditMiddleware = (action) => {
       try {
         if (req.user) {
           let documentId = null;
-          let moduleName = null;
+          let moduleName = module; // Use provided module name first
 
-          // 1️⃣ Try to detect document and module from response keys
+          // 1️⃣ Try to detect document and module if not provided
           if (data) {
-            const keys = Object.keys(data); // e.g., ["lead"], ["property"], ["activity"], ["leads"]
+            const keys = Object.keys(data);
             for (const key of keys) {
-              // Skip generic keys like "message" or "error"
               if (!["message", "error"].includes(key) && data[key]?._id) {
                 documentId = data[key]._id;
-                moduleName = key.toUpperCase(); // lead → LEAD
+                if (!moduleName) moduleName = key.toUpperCase();
                 break;
               }
             }
 
-            // If single object is returned directly (no key), use it
             if (!documentId && data?._id) {
               documentId = data._id;
-              moduleName = "UNKNOWN";
+              if (!moduleName) moduleName = "UNKNOWN";
             }
           }
 

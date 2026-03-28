@@ -10,9 +10,10 @@ export const createActivityService = async (data) => {
     $push: { notes: activity._id },
   });
 
-  return activity
-    .populate("lead", "name email phone property")
-    .populate("agent", "name email");
+  return await activity.populate([
+    { path: "lead", select: "name email phone property" },
+    { path: "agent", select: "name email" },
+  ]);
 };
 
 export const getActivitiesService = async (filters = {}, options = {}) => {

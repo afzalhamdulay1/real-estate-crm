@@ -17,10 +17,10 @@ router.use(protect);
 // Get leads (agents can see their leads, admins see all)
 router.get("/", getLeads);
 
-// Create lead (admin/superadmin only)
+// Create lead (agent/admin/superadmin)
 router.post(
   "/",
-  authorizeRoles("admin", "superadmin"),
+  authorizeRoles("agent", "admin", "superadmin"),
   auditMiddleware("CREATE", "LEAD"),
   createLead,
 );
