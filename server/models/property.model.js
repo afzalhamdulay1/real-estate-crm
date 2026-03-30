@@ -11,6 +11,8 @@ const propertySchema = new mongoose.Schema(
     },
     price: { type: Number, required: true },
     area: { type: String }, // e.g., "1200 sq.ft"
+    beds: { type: Number, default: 0 },
+    baths: { type: Number, default: 0 },
     location: {
       city: { type: String },
       address: { type: String },

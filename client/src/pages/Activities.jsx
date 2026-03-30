@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Loader2
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -136,29 +137,35 @@ const Activities = () => {
         </div>
         <button 
           onClick={() => setModalOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] text-[10px] px-8 py-4 rounded-2xl shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+          className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] text-[10px] px-8 py-4 rounded-2xl shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98] border border-white/20 hover:border-white/40 group"
         >
-          <Plus className="w-5 h-5 bg-white/20 p-1 rounded-lg" />
+          <div className="bg-white/20 p-1 rounded-lg group-hover:rotate-90 transition-transform">
+             <Plus className="w-3.5 h-3.5 text-white" />
+          </div>
           Log Activity
         </button>
       </div>
 
       {/* Filter Bar */}
       <div className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
-         <div className="relative flex-1 group">
-            <Search className="absolute left-3.5 top-2.5 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Filter activities by lead name or type..." 
-              className="w-full bg-[#141414] border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all transition-all font-medium"
-            />
-         </div>
-         <select className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground">
-           <option>All Types</option>
-           <option>Calls</option>
-           <option>Emails</option>
-           <option>Meetings</option>
-         </select>
+          <div className="relative flex-1 group">
+             <Search className="absolute left-3.5 top-2.5 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+             <input 
+               type="text" 
+               placeholder="Filter activities by lead name or type..." 
+               onClick={() => toast('Timeline filtering coming soon!', { icon: '🔍' })}
+               className="w-full bg-[#141414] border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
+             />
+          </div>
+          <select 
+            onChange={() => toast('Type filtering coming soon!', { icon: '🚀' })}
+            className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground"
+          >
+            <option className="bg-[#1a1a1a] text-white">All Types</option>
+            <option className="bg-[#1a1a1a] text-white">Calls</option>
+            <option className="bg-[#1a1a1a] text-white">Emails</option>
+            <option className="bg-[#1a1a1a] text-white">Meetings</option>
+          </select>
       </div>
 
       {/* Timeline */}

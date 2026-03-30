@@ -19,7 +19,7 @@ export const createProperty = async (req, res) => {
 // Get all properties
 export const getProperties = async (req, res) => {
   try {
-    const properties = await getPropertiesService();
+    const properties = await getPropertiesService(req.query);
     res.json({ properties });
   } catch (error) {
     res.status(400).json({ message: error.message });

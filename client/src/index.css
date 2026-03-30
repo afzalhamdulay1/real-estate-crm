@@ -82,6 +82,14 @@
     color: hsl(var(--foreground));
     font-family: 'Outfit', sans-serif;
   }
+  button, 
+  a, 
+  select,
+  label.cursor-pointer,
+  [role="button"],
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
 }
 
 /* Glassmorphism Classes */

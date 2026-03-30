@@ -7,6 +7,7 @@ import { createActivity, resetActivities } from '../features/activities/activity
 import { getLeads } from '../features/leads/leadSlice';
 import { toast } from 'react-hot-toast';
 import { X, Loader2, User, Tag, FileText, Calendar, CheckCircle2 } from 'lucide-react';
+import SearchableSelect from './SearchableSelect';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -23,7 +24,7 @@ const activitySchema = z.object({
 });
 
 const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
     resolver: zodResolver(activitySchema),
     defaultValues: {
       lead: selectedLeadId,
@@ -34,6 +35,7 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
 
   const selectedType = watch('type');
   const selectedStatus = watch('status');
+  const currentLeadId = watch('lead');
   const dispatch = useDispatch();
   
   const { leads } = useSelector((state) => state.leads);
@@ -41,10 +43,15 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
   const { isLoading, isCreateSuccess, isError, message } = useSelector((state) => state.activities);
 
   React.useEffect(() => {
-    if (isOpen && leads.length === 0) {
+    if (isOpen && !selectedLeadId) {
       dispatch(getLeads());
     }
-  }, [isOpen, dispatch, leads.length]);
+  }, [isOpen, selectedLeadId, dispatch]);
+
+  const leadOptions = [
+    { value: '', label: '-- Choose a lead --' },
+    ...leads.map(l => ({ value: l._id, label: `${l.name} (${l.property?.title || 'No Property'})` }))
+  ];
 
   React.useEffect(() => {
     if (isError) {
@@ -88,22 +95,17 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
           {/* Lead Selection */}
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-50">
             <label className="text-sm font-medium text-muted-foreground ml-1 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> Select Lead
+               Select Lead
             </label>
-            <select
-              {...register('lead')}
-              className={cn(
-                "w-full bg-[#1a1a1a] border rounded-xl py-2.5 px-4 text-sm focus:outline-none transition-all appearance-none outline-none",
-                errors.lead ? "border-destructive" : "border-white/10 focus:ring-2 focus:ring-primary/50 focus:border-primary"
-              )}
-            >
-              <option value="">-- Choose a lead --</option>
-              {leads.map((l) => (
-                <option key={l._id} value={l._id}>{l.name} ({l.property?.title || 'No Property'})</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={leadOptions}
+              value={currentLeadId || ''}
+              onChange={(val) => setValue('lead', val)}
+              placeholder="-- Choose a lead --"
+              icon={<User className="w-3.5 h-3.5 text-primary/60" />}
+            />
             {errors.lead && <p className="text-xs text-destructive ml-1">{errors.lead.message}</p>}
           </div>
 
@@ -118,10 +120,10 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
                   <label key={t} className="cursor-pointer">
                     <input type="radio" {...register('type')} value={t} className="sr-only" />
                     <div className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                      "px-4 py-2.5 rounded-xl text-xs font-bold transition-all border",
                       selectedType === t 
-                        ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
-                        : "bg-white/5 border-white/5 text-muted-foreground hover:bg-white/10"
+                        ? "bg-primary/20 border-primary text-primary shadow-lg shadow-primary/20 ring-1 ring-primary" 
+                        : "bg-white/5 border-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
                     )}>
                       {t}
                     </div>
@@ -136,19 +138,37 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
                 <CheckCircle2 className="w-3.5 h-3.5" /> Activity Status
               </label>
               <div className="flex gap-2">
-                {['Pending', 'Completed', 'Follow-up'].map((s) => (
-                  <label key={s} className="flex-1 cursor-pointer">
-                    <input type="radio" {...register('status')} value={s} className="sr-only" />
-                    <div className={cn(
-                      "w-full text-center py-2 rounded-xl text-xs font-bold transition-all border",
-                      selectedStatus === s 
-                        ? "bg-white/10 border-white text-white shadow-lg" 
-                        : "bg-white/5 border-white/5 text-muted-foreground hover:bg-white/10"
-                    )}>
-                      {s}
-                    </div>
-                  </label>
-                ))}
+                {['Pending', 'Completed', 'Follow-up'].map((s) => {
+                  const isSelected = selectedStatus === s;
+                  
+                  // Dynamic styles based on specific status to give instant visual cues
+                  let activeClass = "";
+                  let hoverClass = "";
+                  if (s === 'Pending') {
+                    activeClass = "bg-amber-500/20 border-amber-500 text-amber-500 shadow-amber-500/20 ring-1 ring-amber-500";
+                    hoverClass = "hover:bg-amber-500/10 hover:text-amber-500";
+                  } else if (s === 'Completed') {
+                    activeClass = "bg-emerald-500/20 border-emerald-500 text-emerald-500 shadow-emerald-500/20 ring-1 ring-emerald-500";
+                    hoverClass = "hover:bg-emerald-500/10 hover:text-emerald-500";
+                  } else {
+                    activeClass = "bg-primary/20 border-primary text-primary shadow-primary/20 ring-1 ring-primary";
+                    hoverClass = "hover:bg-primary/10 hover:text-primary";
+                  }
+
+                  return (
+                    <label key={s} className="flex-1 cursor-pointer">
+                      <input type="radio" {...register('status')} value={s} className="sr-only" />
+                      <div className={cn(
+                        "w-full text-center py-2.5 rounded-xl text-xs font-bold transition-all border",
+                        isSelected 
+                          ? activeClass 
+                          : `bg-white/5 border-white/5 text-muted-foreground ${hoverClass}`
+                      )}>
+                        {s}
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -170,20 +190,20 @@ const ActivityModal = ({ isOpen, onClose, selectedLeadId = '' }) => {
             {errors.notes && <p className="text-xs text-destructive ml-1">{errors.notes.message}</p>}
           </div>
 
-          <div className="pt-2 flex gap-3">
+          <div className="pt-4 flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-3.5 rounded-2xl transition-all border border-white/10"
+              className="flex-1 bg-white/[0.03] hover:bg-white/[0.08] text-white/70 hover:text-white font-bold py-4 text-xs rounded-2xl transition-all border border-white/5 hover:border-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-[2] bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-2xl shadow-xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-white/20 hover:border-white/40 group"
             >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />}
               Save Activity
             </button>
           </div>

@@ -2,6 +2,7 @@ import express from "express";
 import {
   createLead,
   getLeads,
+  getLead,
   updateLead,
   deleteLead,
 } from "../controllers/lead.controller.js";
@@ -14,8 +15,11 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-// Get leads (agents can see their leads, admins see all)
+// Get all leads (agents can see their leads, admins see all)
 router.get("/", getLeads);
+
+// Get single lead
+router.get("/:id", getLead);
 
 // Create lead (agent/admin/superadmin)
 router.post(

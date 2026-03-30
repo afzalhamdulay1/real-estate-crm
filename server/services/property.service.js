@@ -7,8 +7,19 @@ export const createPropertyService = async (data) => {
 };
 
 // Get all properties
-export const getPropertiesService = async () => {
-  const properties = await Property.find().populate(
+export const getPropertiesService = async (queryParams = {}) => {
+  const { search } = queryParams;
+  let filter = {};
+
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { "location.address": { $regex: search, $options: "i" } },
+      { "location.city": { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const properties = await Property.find(filter).populate(
     "assignedAgent",
     "name email",
   );

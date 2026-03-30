@@ -16,7 +16,7 @@ const auditLogSchema = new mongoose.Schema(
 
     module: {
       type: String,
-      enum: ["LEAD", "PROPERTY", "ACTIVITY"],
+      enum: ["LEAD", "PROPERTY", "ACTIVITY", "USER"],
       required: true,
     },
 
