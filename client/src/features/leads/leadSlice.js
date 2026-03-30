@@ -15,12 +15,40 @@ export const getLeads = createAsyncThunk(
   }
 );
 
+// Get single lead
+export const getLead = createAsyncThunk(
+  'leads/getOne',
+  async (id, thunkAPI) => {
+    try {
+      const response = await api.get(`/leads/${id}`);
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 // Create lead
 export const createLead = createAsyncThunk(
   'leads/create',
   async (leadData, thunkAPI) => {
     try {
       const response = await api.post('/leads', leadData);
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+// Update lead
+export const updateLead = createAsyncThunk(
+  'leads/update',
+  async ({ id, leadData }, thunkAPI) => {
+    try {
+      const response = await api.put(`/leads/${id}`, leadData);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
@@ -45,6 +73,7 @@ export const deleteLead = createAsyncThunk(
 
 const initialState = {
   leads: [],
+  currentLead: null,
   isError: false,
   isSuccess: false,
   isCreateSuccess: false,
@@ -75,6 +104,30 @@ export const leadSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.leads = action.payload.leads || [];
+      })
+      .addCase(updateLead.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        const updatedLead = action.payload.lead;
+        state.leads = state.leads.map((lead) => 
+          lead._id === updatedLead._id ? updatedLead : lead
+        );
+        if (state.currentLead && state.currentLead._id === updatedLead._id) {
+          state.currentLead = updatedLead;
+        }
+      })
+      .addCase(getLead.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getLead.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.currentLead = action.payload.lead;
+      })
+      .addCase(getLead.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       })
       .addCase(getLeads.rejected, (state, action) => {
         state.isLoading = false;

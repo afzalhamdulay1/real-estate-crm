@@ -1,21 +1,58 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getLeads, deleteLead, resetLeads } from '../features/leads/leadSlice';
-import { Users, Search, Filter, Download, Plus, MoreHorizontal, User, Mail, Phone, Calendar, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import { getLeads, deleteLead, updateLead, resetLeads } from '../features/leads/leadSlice';
+import { getUsers } from '../features/users/userSlice';
+import { getProperties } from '../features/properties/propertySlice';
+import { Users as UsersIcon, Search, Filter, Download, Plus, MoreHorizontal, User, Mail, Phone, Calendar, Trash2, AlertTriangle, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import LeadModal from '../components/LeadModal';
+import SearchableSelect from '../components/SearchableSelect';
+// import LeadDetailsModal from '../components/LeadDetailsModal'; // Deprecated in favor of LeadProfile page
 import { toast } from 'react-hot-toast';
 
 const Leads = () => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDebouncing, setIsDebouncing] = useState(false);
   
   const dispatch = useDispatch();
   const { leads, isLoading, isError, isDeleteSuccess, message } = useSelector((state) => state.leads);
   const { user } = useSelector((state) => state.auth);
+  const { users } = useSelector((state) => state.users);
+  const { properties } = useSelector((state) => state.properties);
 
   useEffect(() => {
-    dispatch(getLeads());
-  }, [dispatch]);
+    setIsDebouncing(true);
+    const timer = setTimeout(() => {
+      dispatch(getLeads(searchTerm)).then(() => setIsDebouncing(false));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [dispatch, searchTerm]);
+
+  useEffect(() => {
+    if (users.length === 0) dispatch(getUsers());
+    if (properties.length === 0) dispatch(getProperties());
+  }, [dispatch, users.length, properties.length]);
+
+  const handleAssignAgent = (id, newAgentId) => {
+    const leadData = newAgentId ? { assignedTo: newAgentId } : { assignedTo: null };
+    dispatch(updateLead({ id, leadData })).then((res) => {
+      if (!res.error) toast.success('Lead assignment updated');
+      else toast.error('Failed to update assignment');
+    });
+  };
+
+  const handleUpdateProperty = (id, propertyId) => {
+    const leadData = propertyId ? { property: propertyId } : { property: null };
+    dispatch(updateLead({ id, leadData })).then((res) => {
+      if (!res.error) toast.success('Lead property updated');
+      else toast.error('Failed to update property');
+    });
+  };
 
   useEffect(() => {
     if (isDeleteSuccess) {
@@ -23,6 +60,7 @@ const Leads = () => {
       setDeleteConfirmId(null);
       dispatch(resetLeads());
     }
+
     if (isError && message) {
       toast.error(message);
       dispatch(resetLeads());
@@ -32,6 +70,8 @@ const Leads = () => {
   const handleDelete = (id) => {
     dispatch(deleteLead(id));
   };
+  
+  const showSkeleton = isLoading || isDebouncing;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -43,6 +83,17 @@ const Leads = () => {
       default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
     }
   };
+  const agentOptions = [
+    { value: '', label: 'Unassigned' },
+    ...users
+      .filter(u => ['admin', 'superadmin', 'agent'].includes(u.role))
+      .map(u => ({ value: u._id, label: `${u.name} (${u.role.toUpperCase()})` }))
+  ];
+
+  const propertyOptions = [
+    { value: '', label: 'No Interest' },
+    ...properties.map(p => ({ value: p._id, label: p.title }))
+  ];
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'superadmin');
 
@@ -55,9 +106,11 @@ const Leads = () => {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 group active:scale-[0.98]"
+          className="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 group active:scale-[0.98] border border-white/20 hover:border-white/40"
         >
-          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform bg-white/20 p-1 rounded-lg" />
+          <div className="bg-white/20 p-1 rounded-lg group-hover:rotate-90 transition-transform">
+             <Plus className="w-3 h-3 text-white" />
+          </div>
           <span>Create Lead</span>
         </button>
       </div>
@@ -69,47 +122,56 @@ const Leads = () => {
             <input 
               type="text" 
               placeholder="Search by name, email..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-11 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
             />
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
-             <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 hover:bg-white/5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all">
+             <button 
+               onClick={() => toast('Feature coming soon!', { icon: '🚀' })}
+               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 hover:bg-white/5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all"
+             >
                 <Filter className="w-4 h-4 text-primary" /> Filter
              </button>
-             <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 hover:bg-white/5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all">
+             <button 
+               onClick={() => toast('Feature coming soon!', { icon: '🚀' })}
+               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 hover:bg-white/5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all"
+             >
                 <Download className="w-4 h-4 text-primary" /> Export
              </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm border-collapse">
             <thead className="bg-[#141414] text-muted-foreground uppercase text-[10px] font-black tracking-[0.2em] border-b border-white/5">
               <tr>
-                <th className="px-6 py-6">Lead Name</th>
-                <th className="px-6 py-6">Contact Details</th>
-                <th className="px-6 py-6 text-center">Status</th>
-                <th className="px-6 py-6">Created At</th>
+                <th className="px-6 py-6 text-left">Property Lead</th>
+                <th className="px-6 py-6">Connection Details</th>
+                <th className="px-6 py-6 text-center">Lifecycle Status</th>
+                <th className="px-6 py-6">Registered On</th>
                 <th className="px-6 py-6 text-right pr-8">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {isLoading && leads.length === 0 ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-6 py-5"><div className="h-10 w-40 bg-white/5 rounded-lg"></div></td>
-                    <td className="px-6 py-5"><div className="h-10 w-48 bg-white/5 rounded-lg"></div></td>
-                    <td className="px-6 py-5"><div className="h-6 w-20 bg-white/5 rounded-full mx-auto"></div></td>
-                    <td className="px-6 py-5"><div className="h-6 w-32 bg-white/5 rounded-lg"></div></td>
-                    <td className="px-6 py-5 text-right"><div className="h-8 w-8 bg-white/5 rounded-lg ml-auto"></div></td>
-                  </tr>
-                ))
+              {showSkeleton ? (
+                <tr>
+                   <td colSpan="5" className="px-6 py-24 text-center">
+                    <div className="flex flex-col items-center justify-center gap-6 opacity-80">
+                      <div className="relative">
+                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                        <div className="absolute inset-0 bg-primary/20 blur-xl animate-pulse" />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
               ) : leads.length === 0 ? (
                 <tr>
                    <td colSpan="5" className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-5">
                       <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center border border-white/5">
-                         <Users className="w-10 h-10 text-muted-foreground/30" />
+                         <UsersIcon className="w-10 h-10 text-muted-foreground/30" />
                       </div>
                       <div>
                         <p className="text-xl font-bold text-white leading-tight">No leads found</p>
@@ -121,18 +183,21 @@ const Leads = () => {
               ) : leads.map((lead) => (
                 <tr key={lead._id} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-6 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary/80 to-purple-600 flex items-center justify-center text-[11px] font-black shadow-lg shadow-primary/30 border border-white/10 group-hover:scale-110 transition-transform">
+                    <button 
+                      onClick={() => navigate(`/leads/${lead._id}`)}
+                      className="flex items-center gap-4 text-left group/name w-full hover:bg-white/5 p-2 -ml-2 rounded-xl transition-all"
+                    >
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary/80 to-purple-600 flex items-center justify-center text-[11px] font-black shadow-lg shadow-primary/30 border border-white/10 group-hover/name:scale-110 transition-transform shrink-0">
                         {lead.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-white font-bold text-base tracking-tight leading-tight">{lead.name}</span>
+                        <span className="text-white font-bold text-base tracking-tight leading-tight group-hover/name:text-primary transition-colors">{lead.name}</span>
                         <span className="text-[10px] text-muted-foreground font-black tracking-[0.1em] uppercase mt-0.5">{lead.source}</span>
                       </div>
-                    </div>
+                    </button>
                   </td>
                   <td className="px-6 py-6">
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 min-w-[200px]">
                       <div className="flex items-center gap-2 text-xs font-medium text-gray-300">
                         <Mail className="w-3.5 h-3.5 text-primary" /> {lead.email || 'N/A'}
                       </div>
@@ -162,7 +227,10 @@ const Leads = () => {
                           <Trash2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
                         </button>
                       )}
-                      <button className="p-2.5 hover:bg-white/5 rounded-xl transition-all text-muted-foreground hover:text-white border border-transparent hover:border-white/10">
+                      <button 
+                        className="p-2.5 hover:bg-white/5 rounded-xl transition-all text-muted-foreground hover:text-white border border-transparent hover:border-white/10"
+                        onClick={() => navigate(`/leads/${lead._id}`)}
+                      >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
                     </div>

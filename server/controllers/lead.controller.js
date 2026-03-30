@@ -1,6 +1,7 @@
 import {
   createLeadService,
   getLeadsService,
+  getLeadService,
   updateLeadService,
   deleteLeadService,
 } from "../services/lead.service.js";
@@ -22,6 +23,16 @@ export const getLeads = async (req, res) => {
     res.json({ leads });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// Get Single Lead
+export const getLead = async (req, res) => {
+  try {
+    const lead = await getLeadService(req.params.id);
+    res.json({ lead });
+  } catch (error) {
+    res.status(error.message === "Lead not found" ? 404 : 400).json({ message: error.message });
   }
 };
 

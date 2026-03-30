@@ -4,8 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { createLead, resetLeads } from '../features/leads/leadSlice';
+import { getUsers } from '../features/users/userSlice';
+import { getProperties } from '../features/properties/propertySlice';
 import { toast } from 'react-hot-toast';
-import { X, Loader2, User, Mail, Phone, Tag, Building2, LayoutGrid } from 'lucide-react';
+import { X, Loader2, User, Mail, Phone, Tag, Building2, LayoutGrid, ShieldCheck } from 'lucide-react';
+import SearchableSelect from './SearchableSelect';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -19,10 +22,12 @@ const leadSchema = z.object({
   phone: z.string().min(10, { message: 'Phone must be at least 10 characters' }).optional().or(z.literal('')),
   source: z.enum(['Website', 'Referral', 'Walk-in', 'Other']),
   status: z.enum(['New', 'Contacted', 'Interested', 'Closed', 'Lost']),
+  assignedTo: z.string().optional(),
+  property: z.string().optional(),
 });
 
 const LeadModal = ({ isOpen, onClose }) => {
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
     resolver: zodResolver(leadSchema),
     defaultValues: {
       source: 'Website',
@@ -33,6 +38,30 @@ const LeadModal = ({ isOpen, onClose }) => {
   const selectedStatus = watch('status');
   const dispatch = useDispatch();
   const { isLoading, isCreateSuccess, isError, message } = useSelector((state) => state.leads);
+  const { users } = useSelector((state) => state.users);
+  const { properties } = useSelector((state) => state.properties);
+
+  const assignedToValue = watch('assignedTo');
+  const propertyInterestValue = watch('property');
+  
+  const agentOptions = [
+    { value: '', label: 'Unassigned' },
+    ...users
+      .filter(u => ['admin', 'superadmin', 'agent'].includes(u.role))
+      .map(u => ({ value: u._id, label: `${u.name} (${u.role.toUpperCase()})` }))
+  ];
+
+  const propertyOptions = [
+    { value: '', label: 'No Specific Property' },
+    ...properties.map(p => ({ value: p._id, label: `${p.title} (${p.location?.city})` }))
+  ];
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (users.length === 0) dispatch(getUsers());
+      if (properties.length === 0) dispatch(getProperties());
+    }
+  }, [isOpen, dispatch, users.length, properties.length]);
 
   React.useEffect(() => {
     if (isError) {
@@ -50,6 +79,8 @@ const LeadModal = ({ isOpen, onClose }) => {
     const filteredData = { ...data };
     if (!filteredData.email) delete filteredData.email;
     if (!filteredData.phone) delete filteredData.phone;
+    if (!filteredData.assignedTo) delete filteredData.assignedTo;
+    if (!filteredData.property) delete filteredData.property;
     
     dispatch(createLead(filteredData));
   };
@@ -122,11 +153,41 @@ const LeadModal = ({ isOpen, onClose }) => {
                 {...register('source')}
                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none outline-none"
               >
-                <option value="Website">Website</option>
-                <option value="Referral">Referral</option>
-                <option value="Walk-in">Walk-in</option>
-                <option value="Other">Other</option>
+                <option value="Website" className="bg-[#1a1a1a] text-white">Website</option>
+                <option value="Referral" className="bg-[#1a1a1a] text-white">Referral</option>
+                <option value="Walk-in" className="bg-[#1a1a1a] text-white">Walk-in</option>
+                <option value="Other" className="bg-[#1a1a1a] text-white">Other</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-50">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground ml-1 flex items-center gap-1.5">
+                Responsible Agent
+              </label>
+              <SearchableSelect
+                options={agentOptions}
+                value={assignedToValue || ''}
+                onChange={(val) => setValue('assignedTo', val)}
+                placeholder="Unassigned"
+                searchPlaceholder="Search agents..."
+                icon={<ShieldCheck className="w-3.5 h-3.5 text-primary/60" />}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground ml-1 flex items-center gap-1.5">
+                 Property Interest
+              </label>
+              <SearchableSelect
+                options={propertyOptions}
+                value={propertyInterestValue || ''}
+                onChange={(val) => setValue('property', val)}
+                placeholder="None"
+                searchPlaceholder="Search listings..."
+                icon={<Building2 className="w-3.5 h-3.5 text-primary/60" />}
+              />
             </div>
           </div>
 

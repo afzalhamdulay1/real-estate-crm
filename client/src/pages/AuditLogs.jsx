@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Loader2
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -69,20 +70,27 @@ const AuditLogs = () => {
             <input 
               type="text" 
               placeholder="Search by User or ID..." 
+              onClick={() => toast('Search logic coming soon!', { icon: '🔍' })}
               className="w-full bg-[#141414] border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
             />
          </div>
-         <select className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground">
-           <option>All Modules</option>
-           <option>LEAD</option>
-           <option>PROPERTY</option>
-           <option>ACTIVITY</option>
+         <select 
+           onChange={() => toast('Filtering coming soon!', { icon: '🚀' })}
+           className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground"
+         >
+           <option className="bg-[#1a1a1a] text-white">All Modules</option>
+           <option className="bg-[#1a1a1a] text-white">LEAD</option>
+           <option className="bg-[#1a1a1a] text-white">PROPERTY</option>
+           <option className="bg-[#1a1a1a] text-white">ACTIVITY</option>
          </select>
-         <select className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground">
-           <option>All Actions</option>
-           <option>CREATE</option>
-           <option>UPDATE</option>
-           <option>DELETE</option>
+         <select 
+           onChange={() => toast('Action filtering coming soon!', { icon: '🚀' })}
+           className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-4 text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-muted-foreground"
+         >
+           <option className="bg-[#1a1a1a] text-white">All Actions</option>
+           <option className="bg-[#1a1a1a] text-white">CREATE</option>
+           <option className="bg-[#1a1a1a] text-white">UPDATE</option>
+           <option className="bg-[#1a1a1a] text-white">DELETE</option>
          </select>
       </div>
 

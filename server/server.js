@@ -1,5 +1,11 @@
 import dotenv from "dotenv";
-dotenv.config();
+const envResult = dotenv.config();
+if (envResult.error) {
+  console.error("Dotenv Error:", envResult.error);
+}
+console.log("Dotenv loaded from:", envResult.parsed ? "parsed" : "not parsed");
+console.log("MONGO_URI value:", process.env.MONGO_URI ? "Found" : "Missing");
+
 import app from "./app.js";
 import connectDB from "./config/db.js";
 

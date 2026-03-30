@@ -35,6 +35,11 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Property",
     },
+    // Final Agreed Sales Price
+    dealValue: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );

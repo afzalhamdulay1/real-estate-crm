@@ -8,6 +8,9 @@ import DashboardLayout from './layouts/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Activities from './pages/Activities';
 import AuditLogs from './pages/AuditLogs';
+import Users from './pages/Users';
+import LeadProfile from './pages/LeadProfile';
+import Guide from './pages/Guide';
 
 const App = () => {
   return (
@@ -20,10 +23,14 @@ const App = () => {
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/leads" element={<Leads />} />
+            <Route path="/leads/:id" element={<LeadProfile />} />
             <Route path="/properties" element={<Properties />} />
             <Route path="/activities" element={<Activities />} />
+            <Route path="/guide" element={<Guide />} />
+            {/* Admin/Superadmin Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin', 'superadmin']} />}>
               <Route path="/audit-logs" element={<AuditLogs />} />
+              <Route path="/users" element={<Users />} />
             </Route>
           </Route>
         </Route>
