@@ -62,6 +62,24 @@ const Login = () => {
               <p className="text-sm font-bold text-muted-foreground uppercase tracking-[0.25em]">Authorized Access Only</p>
             </div>
 
+            {/* Demo Credentials Module */}
+            <div className="mb-10 p-5 bg-white/[0.02] border border-white/5 rounded-[2rem] space-y-3 animate-in fade-in slide-in-from-top-4 duration-1000 delay-300">
+              <div className="flex items-center gap-3 px-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center text-red-500">Use Admin username and password to login</p>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center bg-white/[0.02] p-3 rounded-xl border border-white/5 hover:border-primary/20 transition-colors">
+                  <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">Login ID</span>
+                  <span className="text-[10px] font-black text-primary tracking-wider">admin1@gmail.com</span>
+                </div>
+                <div className="flex justify-between items-center bg-white/[0.02] p-3 rounded-xl border border-white/5 hover:border-primary/20 transition-colors">
+                  <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">Password</span>
+                  <span className="text-[10px] font-black text-white tracking-widest">123456</span>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Email Logic Field */}
               <div className="space-y-2">
@@ -116,7 +134,6 @@ const Login = () => {
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       </div>
