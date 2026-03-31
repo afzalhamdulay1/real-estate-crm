@@ -231,8 +231,8 @@ const Dashboard = () => {
                 {isLoading && leadStatusData.length === 0 ? <div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin opacity-10" /></div> : (
                   <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <PieChart>
-                      <Pie data={leadStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={8} dataKey="value" stroke="none">{leadStatusData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Pie data={leadStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={0} dataKey="value" stroke="none">{leadStatusData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie>
+                      <Tooltip content={<CustomTooltip />} allowEscapeViewBox={{ x: true, y: true }} />
                       <Legend verticalAlign="bottom" align="center" iconType="circle" formatter={(value) => <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">{value}</span>} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -251,7 +251,7 @@ const Dashboard = () => {
                   <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <PieChart>
                       <Pie data={propertyTypeData} cx="50%" cy="50%" innerRadius={0} outerRadius={85} paddingAngle={0} dataKey="value" stroke="none">{propertyTypeData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />))}</Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} allowEscapeViewBox={{ x: true, y: true }} />
                       <Legend verticalAlign="bottom" align="center" iconType="rect" formatter={(value) => <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">{value}</span>} />
                     </PieChart>
                   </ResponsiveContainer>
