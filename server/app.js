@@ -11,14 +11,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
-    credentials: true,
-  })
-);
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: true,
+  })
+);
 
 // Routes
 app.use("/api", routes);
