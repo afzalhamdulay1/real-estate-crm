@@ -42,7 +42,7 @@ const Login = () => {
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[140px] opacity-40 animate-pulse transition-all duration-[5000ms]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[140px] opacity-30 animate-pulse delay-1000 transition-all duration-[5000ms]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none" />
+        <div className="absolute inset-0 grain opacity-[0.03] mix-blend-overlay pointer-events-none" />
       </div>
 
       <div className="relative z-10 w-full max-w-md px-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
