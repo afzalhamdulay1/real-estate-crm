@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getDashboardStats } from '../features/dashboard/dashboardSlice';
+import { getDashboardStats, getTrajectoryOnly } from '../features/dashboard/dashboardSlice';
 import {
   Users,
   Building2,
@@ -69,20 +69,29 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const [timeframe, setTimeframe] = useState('monthly');
   const {
     stats = {},
     recentActivities = [],
     topProperty,
     trajectoryData = [],
+    revenueTrajectoryData = [],
     inventoryTrajectory = [],
     leadStatusData = [],
     propertyTypeData = [],
-    isLoading
+    isLoading,
+    isChartLoading
   } = useSelector((state) => state.dashboard || {});
 
+  // Initial Full Load
   useEffect(() => {
     dispatch(getDashboardStats());
   }, [dispatch]);
+
+  // Atomic Trajectory Load (Timeframe Change)
+  useEffect(() => {
+    dispatch(getTrajectoryOnly({ period: timeframe }));
+  }, [dispatch, timeframe]);
 
   const formatActivityText = (log) => {
     const userName = `${log.user?.firstName || 'Agent'} ${log.user?.lastName || ''}`;
@@ -116,14 +125,37 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div className="flex flex-col gap-1.5">
                 <h3 className="text-2xl font-black tracking-tight text-white italic">Revenue <span className="text-primary not-italic">Trajectory</span></h3>
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">6-Month Growth Velocity</p>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">{timeframe === 'monthly' ? '6-Month Growth Velocity' : '7-Day Operational Pulse'}</p>
               </div>
-              <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 font-mono"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> Real-time</div></div>
+              <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 relative z-10">
+                <button 
+                  onClick={() => setTimeframe('monthly')}
+                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative ${timeframe === 'monthly' ? 'bg-white text-[#050505] shadow-[0_0_20px_rgba(139,92,246,0.5)]' : 'text-muted-foreground/60 hover:text-white hover:bg-white/5'}`}
+                >
+                  Monthly
+                </button>
+                <button 
+                  onClick={() => setTimeframe('daily')}
+                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative ${timeframe === 'daily' ? 'bg-white text-[#050505] shadow-[0_0_20px_rgba(139,92,246,0.5)]' : 'text-muted-foreground/60 hover:text-white hover:bg-white/5'}`}
+                >
+                  Daily
+                </button>
+              </div>
             </div>
-            <div className="flex-1 min-h-[450px] w-full mt-4">
-              {isLoading && trajectoryData.length === 0 ? <div className="h-full w-full flex flex-col items-center justify-center opacity-20"><Loader2 className="w-10 h-10 animate-spin" /></div> : (
+            <div className="flex-1 min-h-[450px] w-full mt-4 relative">
+              {/* Specialized Chart Loading Overlay */}
+              {isChartLoading && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0a0a0a]/20 backdrop-blur-[2px] rounded-2xl animate-in fade-in duration-300">
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary opacity-50" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/50">Recalibrating...</span>
+                  </div>
+                </div>
+              )}
+
+              {isLoading && revenueTrajectoryData.length === 0 ? <div className="h-full w-full flex flex-col items-center justify-center opacity-20"><Loader2 className="w-10 h-10 animate-spin" /></div> : (
                 <ResponsiveContainer width="100%" height={400} minWidth={0}>
-                  <AreaChart data={trajectoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={revenueTrajectoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
                       <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--primary)" stopOpacity={0} /></linearGradient>
