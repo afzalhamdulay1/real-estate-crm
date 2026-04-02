@@ -5,6 +5,7 @@ import AuditLog from "../models/auditLog.model.js";
 
 export const getDashboardStats = async (req, res) => {
   try {
+    const { period = "monthly" } = req.query;
     // 1. Total Leads
     const totalLeads = await Lead.countDocuments();
 
@@ -68,15 +69,35 @@ export const getDashboardStats = async (req, res) => {
     const trajectoryData = [];
     const inventoryTrajectory = [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const refDate = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
-      const startD = new Date(d.getFullYear(), d.getMonth(), 1);
-      const endD = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+    const iterations = period === "daily" ? 7 : 6;
+
+    for (let i = iterations - 1; i >= 0; i--) {
+      let startD, endD, label;
+
+      if (period === "daily") {
+        startD = new Date(refDate);
+        startD.setDate(refDate.getDate() - i);
+        startD.setHours(0, 0, 0, 0);
+        
+        endD = new Date(startD);
+        endD.setHours(23, 59, 59, 999);
+        
+        label = days[startD.getDay()];
+      } else {
+        const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
+        startD = new Date(d.getFullYear(), d.getMonth(), 1);
+        endD = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        endD.setHours(23, 59, 59, 999);
+        
+        label = months[startD.getMonth()];
+      }
       
       // Lead Metrics
-      const revenue = await Lead.aggregate([
-        { $match: { status: "Closed", createdAt: { $gte: startD, $lte: endD } } },
+      const revenueBatch = await Lead.aggregate([
+        { $match: { status: "Closed", updatedAt: { $gte: startD, $lte: endD } } },
         { $group: { _id: null, total: { $sum: "$dealValue" } } }
       ]);
       const captured = await Lead.countDocuments({ createdAt: { $gte: startD, $lte: endD } });
@@ -87,14 +108,14 @@ export const getDashboardStats = async (req, res) => {
       const moved = await Property.countDocuments({ status: { $in: ["Sold", "Rented"] }, updatedAt: { $gte: startD, $lte: endD } });
 
       trajectoryData.push({
-        name: months[startD.getMonth()],
-        revenue: revenue.length > 0 ? revenue[0].total : 0,
+        name: label,
+        revenue: revenueBatch.length > 0 ? revenueBatch[0].total : 0,
         captured,
         closed
       });
 
       inventoryTrajectory.push({
-        name: months[startD.getMonth()],
+        name: label,
         added,
         moved
       });
@@ -118,6 +139,54 @@ export const getDashboardStats = async (req, res) => {
       leadStatusData,
       propertyTypeData
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getTrajectoryData = async (req, res) => {
+  try {
+    const { period = "monthly" } = req.query;
+    const trajectoryData = [];
+    const inventoryTrajectory = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const refDate = new Date();
+
+    const iterations = period === "daily" ? 7 : 6;
+
+    for (let i = iterations - 1; i >= 0; i--) {
+      let startD, endD, label;
+
+      if (period === "daily") {
+        startD = new Date(refDate);
+        startD.setDate(refDate.getDate() - i);
+        startD.setHours(0, 0, 0, 0);
+        endD = new Date(startD);
+        endD.setHours(23, 59, 59, 999);
+        label = days[startD.getDay()];
+      } else {
+        const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
+        startD = new Date(d.getFullYear(), d.getMonth(), 1);
+        endD = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        endD.setHours(23, 59, 59, 999);
+        label = months[startD.getMonth()];
+      }
+      
+      const revenueBatch = await Lead.aggregate([
+        { $match: { status: "Closed", updatedAt: { $gte: startD, $lte: endD } } },
+        { $group: { _id: null, total: { $sum: "$dealValue" } } }
+      ]);
+      const captured = await Lead.countDocuments({ createdAt: { $gte: startD, $lte: endD } });
+      const closed = await Lead.countDocuments({ status: "Closed", updatedAt: { $gte: startD, $lte: endD } });
+      const added = await Property.countDocuments({ createdAt: { $gte: startD, $lte: endD } });
+      const moved = await Property.countDocuments({ status: { $in: ["Sold", "Rented"] }, updatedAt: { $gte: startD, $lte: endD } });
+
+      trajectoryData.push({ name: label, revenue: revenueBatch.length > 0 ? revenueBatch[0].total : 0, captured, closed });
+      inventoryTrajectory.push({ name: label, added, moved });
+    }
+
+    res.status(200).json({ success: true, trajectoryData, inventoryTrajectory });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
