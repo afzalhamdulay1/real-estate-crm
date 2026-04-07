@@ -9,4 +9,18 @@ const api = axios.create({
   },
 });
 
+// Global response interceptor for security monitoring
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Session Expired logic (401 Unauthorized)
+    if (error.response?.status === 401) {
+      // Clear persistence and redirect to login
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

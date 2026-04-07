@@ -6,31 +6,25 @@ import AuditLog from "../models/auditLog.model.js";
 export const getDashboardStats = async (req, res) => {
   try {
     const { period = "monthly" } = req.query;
-    // 1. Total Leads
     const totalLeads = await Lead.countDocuments();
 
-    // 2. Active Listings (Available properties)
     const activeProperties = await Property.countDocuments({ status: "Available" });
 
-    // 3. Closing Rate (Closed Leads / Total Leads)
     const closedLeads = await Lead.countDocuments({ status: "Closed" });
     const closingRate = totalLeads > 0 ? ((closedLeads / totalLeads) * 100).toFixed(1) : 0;
 
-    // 4. Total Revenue (Sum of dealValue from Closed leads)
     const revenueData = await Lead.aggregate([
       { $match: { status: "Closed", dealValue: { $exists: true, $ne: null } } },
       { $group: { _id: null, total: { $sum: "$dealValue" } } }
     ]);
     const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
-    // 5. Recent Activity (Latest Audit Logs or Activities)
-    // We'll prioritize AuditLogs for a detailed historical feed
+
     const recentActivities = await AuditLog.find()
       .populate("user", "firstName lastName")
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // 6. Top Property (Most leads linked to one property)
     const topPropertyData = await Lead.aggregate([
       { $match: { property: { $exists: true, $ne: null } } },
       { $group: { _id: "$property", count: { $sum: 1 } } },
@@ -43,7 +37,7 @@ export const getDashboardStats = async (req, res) => {
       topProperty = await Property.findById(topPropertyData[0]._id).select("title price location type");
     }
 
-    // 7. Dynamic Market Pulse Calculation
+    // Dynamic Market Pulse Calculation
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 30);
     const recentLeadsCount = await Lead.countDocuments({ createdAt: { $gte: sixtyDaysAgo } });
@@ -53,19 +47,19 @@ export const getDashboardStats = async (req, res) => {
     const nonAvailableProperties = await Property.countDocuments({ status: { $in: ["Sold", "Rented"] } });
     const listingVelocity = totalProperties > 0 ? Math.round((nonAvailableProperties / totalProperties) * 100) : 0;
 
-    // 8. Pipeline Breakdown (Lead Statuses)
+    // Pipeline Breakdown (Lead Statuses)
     const leadStatusData = await Lead.aggregate([
       { $group: { _id: "$status", value: { $sum: 1 } } },
       { $project: { name: "$_id", value: 1, _id: 0 } }
     ]);
 
-    // 9. Portfolio Breakdown (Property Types)
+    // Portfolio Breakdown (Property Types)
     const propertyTypeData = await Property.aggregate([
       { $group: { _id: "$type", value: { $sum: 1 } } },
       { $project: { name: "$_id", value: 1, _id: 0 } }
     ]);
 
-    // 10. Multi-Series Performance Trajectory (Captured vs Closed, New vs Moved)
+    // Multi-Series Performance Trajectory (Captured vs Closed, New vs Moved)
     const trajectoryData = [];
     const inventoryTrajectory = [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -81,20 +75,20 @@ export const getDashboardStats = async (req, res) => {
         startD = new Date(refDate);
         startD.setDate(refDate.getDate() - i);
         startD.setHours(0, 0, 0, 0);
-        
+
         endD = new Date(startD);
         endD.setHours(23, 59, 59, 999);
-        
+
         label = days[startD.getDay()];
       } else {
         const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
         startD = new Date(d.getFullYear(), d.getMonth(), 1);
         endD = new Date(d.getFullYear(), d.getMonth() + 1, 0);
         endD.setHours(23, 59, 59, 999);
-        
+
         label = months[startD.getMonth()];
       }
-      
+
       // Lead Metrics
       const revenueBatch = await Lead.aggregate([
         { $match: { status: "Closed", updatedAt: { $gte: startD, $lte: endD } } },
@@ -102,7 +96,7 @@ export const getDashboardStats = async (req, res) => {
       ]);
       const captured = await Lead.countDocuments({ createdAt: { $gte: startD, $lte: endD } });
       const closed = await Lead.countDocuments({ status: "Closed", updatedAt: { $gte: startD, $lte: endD } });
-      
+
       // Inventory Metrics
       const added = await Property.countDocuments({ createdAt: { $gte: startD, $lte: endD } });
       const moved = await Property.countDocuments({ status: { $in: ["Sold", "Rented"] }, updatedAt: { $gte: startD, $lte: endD } });
@@ -172,7 +166,7 @@ export const getTrajectoryData = async (req, res) => {
         endD.setHours(23, 59, 59, 999);
         label = months[startD.getMonth()];
       }
-      
+
       const revenueBatch = await Lead.aggregate([
         { $match: { status: "Closed", updatedAt: { $gte: startD, $lte: endD } } },
         { $group: { _id: null, total: { $sum: "$dealValue" } } }
