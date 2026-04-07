@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../api/axios';
 
-const API_URL = '/api/dashboard';
+const API_URL = '/dashboard';
 
 export const getDashboardStats = createAsyncThunk(
   'dashboard/getStats',
   async (params = {}, thunkAPI) => {
     try {
-      const response = await axios.get(`${API_URL}/stats`, { params });
+      const response = await api.get(`${API_URL}/stats`, { params });
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -20,7 +20,7 @@ export const getTrajectoryOnly = createAsyncThunk(
   'dashboard/getTrajectory',
   async (params = {}, thunkAPI) => {
     try {
-      const response = await axios.get(`${API_URL}/trajectory`, { params });
+      const response = await api.get(`${API_URL}/trajectory`, { params });
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
